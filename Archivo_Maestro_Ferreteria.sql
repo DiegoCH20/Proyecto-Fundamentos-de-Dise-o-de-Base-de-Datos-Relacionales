@@ -13,10 +13,10 @@ IF DB_ID ('ProyectoFerreteria') IS NOT NULL
     DROP DATABASE ProyectoFerreteria;
 GO
 
-CREATE DATABASE ProyectoFerreteria;    -- Crear la base de datos
+CREATE DATABASE ProyectoFerreteria;  -- Crear la base de datos
 GO
 -- --------------------------------------------------------
-USE ProyectoFerreteria;                -- Usar la base de datos creada
+USE ProyectoFerreteria;  -- Usar la base de datos creada
 GO
 
 /*=======================================================
@@ -24,7 +24,7 @@ GO
  ========================================================*/
 
 CREATE TABLE Sucursal ( -- TABLA #1
-    PK_Sucursal INT PRIMARY KEY IDENTITY (1,1), -- PK auto-incremental
+    PK_Sucursal INT PRIMARY KEY IDENTITY (1,1), -- ID de la sucursal (se genera automáticamente)
     Nombre NVARCHAR (100) NOT NULL,
     Direccion NVARCHAR (200),
     Telefono NVARCHAR (20)
@@ -32,7 +32,7 @@ CREATE TABLE Sucursal ( -- TABLA #1
 
 CREATE TABLE CategoriaProducto ( -- TABLA #2
     PK_Categoria INT PRIMARY KEY IDENTITY (1,1),
-    Nombre NVARCHAR (50) NOT NULL UNIQUE,      -- UNIQUE para no repetir categorías
+    Nombre NVARCHAR (50) NOT NULL UNIQUE, -- Evita que se repitan nombres de categorías
     Descripcion NVARCHAR (200)
 );
 
@@ -45,7 +45,7 @@ CREATE TABLE Rol ( -- TABLA #3
 CREATE TABLE TipoMovimiento ( -- TABLA #4
     PK_TipoMovimiento INT PRIMARY KEY IDENTITY (1,1),
     Nombre NVARCHAR (50) NOT NULL UNIQUE,
-    Signo CHAR (1) NOT NULL,                   -- Ejemplo: '+' entrada, '-' salida
+    Signo CHAR (1) NOT NULL, -- Indica si suma o resta inventario (+ entrada, - salida)
     Descripcion NVARCHAR (200)
 );
 
@@ -60,7 +60,7 @@ CREATE TABLE Cliente ( -- TABLA #5
     Telefono NVARCHAR (20),
     Correo NVARCHAR (100),
     Direccion NVARCHAR (200),
-    FechaRegistro DATETIME DEFAULT GETDATE()   -- DEFAULT para fecha actual
+    FechaRegistro DATETIME DEFAULT GETDATE()-- Guarda la fecha automáticamente
 );
 
 CREATE TABLE Empleado ( -- TABLA #6
@@ -70,7 +70,7 @@ CREATE TABLE Empleado ( -- TABLA #6
     Telefono NVARCHAR (20),
     Correo NVARCHAR (100),
     FechaContratacion DATE,
-    FK_Sucursal INT,                           -- FK hacia Sucursal
+    FK_Sucursal INT, -- Relación con la sucursal donde trabaja
     FOREIGN KEY (FK_Sucursal) REFERENCES Sucursal (PK_Sucursal)
 );
 
@@ -78,9 +78,9 @@ CREATE TABLE Usuario ( -- TABLA #7
     PK_Usuario INT PRIMARY KEY IDENTITY (1,1),
     Username NVARCHAR (50) NOT NULL UNIQUE,
     PasswordHash NVARCHAR (255) NOT NULL,
-    Activo BIT DEFAULT 1,                      -- 1 para activo, 0 para inactivo
-    FK_Empleado INT UNIQUE,                    -- Relación 1 a 1 con Empleado
-    FK_Rol INT NOT NULL,                       -- FK hacia Rol
+    Activo BIT DEFAULT 1, -- 1 para activo, 0 para inactivo
+    FK_Empleado INT UNIQUE, -- Relación 1 a 1 con Empleado
+    FK_Rol INT NOT NULL,  -- FK hacia Rol
     FOREIGN KEY (FK_Empleado) REFERENCES Empleado (PK_Empleado),
     FOREIGN KEY (FK_Rol) REFERENCES Rol (PK_Rol)
 );
@@ -102,7 +102,7 @@ CREATE TABLE Producto ( -- TABLA #9
     PrecioVenta DECIMAL (10,2) NOT NULL CHECK (PrecioVenta >= 0), -- Evitar precios negativos
     PrecioCosto DECIMAL (10,2) NOT NULL,
     StockMinimo INT DEFAULT 0,
-    FK_Categoria INT,                          -- FK hacia Categoria
+    FK_Categoria INT,-- Categoría del producto
     FOREIGN KEY (FK_Categoria) REFERENCES CategoriaProducto (PK_Categoria)
 );
 
@@ -115,7 +115,7 @@ CREATE TABLE ProductoProveedor ( -- TABLA #10
     FK_Proveedor INT NOT NULL,
     PrecioCompra DECIMAL (10,2),
     TiempoEntregaDias INT NOT NULL,
-    PRIMARY KEY (FK_Producto, FK_Proveedor),   -- PK Compuesta
+    PRIMARY KEY (FK_Producto, FK_Proveedor),  -- Clave primaria combinada
     FOREIGN KEY (FK_Producto) REFERENCES Producto (PK_Producto),
     FOREIGN KEY (FK_Proveedor) REFERENCES Proveedor (PK_Proveedor)
 );
@@ -126,7 +126,7 @@ CREATE TABLE Inventario ( -- TABLA #11
     FK_Producto INT NOT NULL,
     Cantidad INT NOT NULL DEFAULT 0,
     FechaUltimaActualizacion DATETIME DEFAULT GETDATE(),
-    UNIQUE (FK_Sucursal, FK_Producto),         -- Evita duplicar producto en misma sucursal
+    UNIQUE (FK_Sucursal, FK_Producto), -- Evita duplicar producto en misma sucursal
     FOREIGN KEY (FK_Sucursal) REFERENCES Sucursal (PK_Sucursal),
     FOREIGN KEY (FK_Producto) REFERENCES Producto (PK_Producto)
 );
@@ -145,7 +145,7 @@ CREATE TABLE MovimientoInventario ( -- TABLA #12
 );
 
 CREATE TABLE Venta ( -- TABLA #13 (Sin Total por 3FN)
-    PK_Venta INT PRIMARY KEY,                  -- ID manual o Identity
+    PK_Venta INT PRIMARY KEY,  -- ID manual o Identity
     Fecha DATETIME NOT NULL DEFAULT GETDATE(),
     FK_Cliente INT NOT NULL,
     FK_Empleado INT NOT NULL,
@@ -160,8 +160,8 @@ CREATE TABLE DetalleVenta ( -- TABLA #14
     FK_Producto INT NOT NULL,
     Cantidad INT NOT NULL,
     PrecioUnitario DECIMAL (10,2) NOT NULL,
-    Subtotal AS (Cantidad * PrecioUnitario),   -- Columna calculada automáticamente
-    PRIMARY KEY (FK_Venta, FK_Producto),       -- PK Compuesta
+    Subtotal AS (Cantidad * PrecioUnitario), -- Columna calculada automáticamente
+    PRIMARY KEY (FK_Venta, FK_Producto), -- PK Compuesta
     FOREIGN KEY (FK_Venta) REFERENCES Venta (PK_Venta) ON DELETE CASCADE,
     FOREIGN KEY (FK_Producto) REFERENCES Producto (PK_Producto)
 );
@@ -183,8 +183,6 @@ GO
 /* ======================================================
  INICIO DEL DML (Carga Inicial de Datos)
  ========================================================*/
-
-
 
 /* ==========================================
  Tablas De Catálogo
@@ -780,65 +778,61 @@ Insert Into Devolucion (FK_Venta, FK_Producto, Cantidad, Motivo, FK_Empleado) Va
  Actualizaciones (Update)
 ============================================*/
 
--- 1. Actualizar teléfono de un cliente
+-- Cambiar teléfono de un cliente
 Update Cliente
 Set Telefono = '8426-3197'
 Where PK_Cliente = 12; -- Se modifica Sofia
 
--- 2. Cambiar precio de un producto
+-- Cambiar precio de un producto
 Update Producto
 Set PrecioVenta = 4000
 Where PK_Producto = 27; -- Se modifica Tubo PVC
 
--- 3. Cambiar rol de un usuario
+-- Cambiar rol de un usuario
 Update Usuario
 Set FK_Rol = 2 -- Pasa a ser Encargado
 Where PK_Usuario = 13; -- Se modifica Pedro Castro Cajero
 
--- 4. Actualizar correo de un empleado
+-- Actualizar correo de un empleado
 Update Empleado
 Set Correo = 'nduran.campos@gmail.com'
 Where PK_Empleado = 28; -- Se modifica Noelia
 
--- 5. Modificar motivo de devolución
+-- Modificar motivo de devolución
 Update Devolucion
 Set Motivo = 'Producto con defecto grave'
 Where PK_Devolucion = 6;
 
 /* ==========================================
-Eliminaciones (Delete)
+Eliminaciones
  ============================================*/
 
--- 1. Eliminar una devolución
+-- Eliminar una devolución
 Delete From Devolucion
 Where PK_Devolucion = 2;
 
--- 2. Eliminar un detalle de venta
+-- Eliminar un detalle de venta
 Delete From DetalleVenta
 Where FK_Venta = 1 And FK_Producto = 2;
 
--- 3. Eliminar un usuario inactivo
+-- Eliminar un usuario inactivo
 Delete From Usuario
 Where Activo = 0;
 
--- 4. Eliminar un cliente específico
+-- Eliminar un cliente específico
 Delete From Cliente
 Where PK_Cliente = 5;
 
--- 5. Eliminar inventario de un producto en una sucursal
+-- Eliminar inventario de un producto en una sucursal
 Delete From Inventario
 Where FK_Producto = 3 And FK_Sucursal = 2;
 
 
 /*==============================================================
   DESARROLLO DE FUNCIONES DEFINIDAS POR EL USUARIO
-  Descripción:
-  Script que crea funciones deterministas para cálculos de 
-  subtotal, impuesto, total, descuento y aumento de precios 
-  en el sistema de ferretería.
 ==============================================================*/
 
--------------Calcular total sin impuesto--------------------------------------
+-- Calcula subtotal
 GO
 CREATE FUNCTION fn_calcular_subtotal
 (
@@ -852,7 +846,7 @@ BEGIN
 END;
 GO
 SELECT dbo.fn_calcular_subtotal(3, 1500);
-----------------Calcular impuesto-----------------------------------
+-- Calcula impuesto
 GO
 CREATE FUNCTION fn_impuesto
 (
@@ -864,7 +858,7 @@ BEGIN
     RETURN (@monto * 0.13);
 END
 GO
-----------------Calcula total con impuesto------------------------------------------------------
+-- Calcula total con impuesto
 GO
 CREATE FUNCTION fn_total
 (
@@ -876,7 +870,7 @@ BEGIN
     RETURN @monto + (@monto * 0.13)
 END
 GO
------------------Calcula descuento------------------------------------------
+-- Aplica descuento
 GO
 CREATE FUNCTION fn_descuento
 (
@@ -888,7 +882,7 @@ BEGIN
     RETURN @precio * 0.90
 END
 GO
----------------Calcula Aumento-----------------------------------------------------
+-- Aplica aumento
 GO
 CREATE FUNCTION fn_aumento
 (
@@ -900,13 +894,13 @@ BEGIN
     RETURN @precio * 1.05
 END
 GO
-------------------Precio Venta-------------------------------------------------
+--Precio Venta
 SELECT 
 p.PrecioVenta,
 dbo.fn_impuesto(p.PrecioVenta) AS impuesto,
 dbo.fn_total(p.PrecioVenta) AS total
 FROM Producto p;
-----------------Precio Costo----------------------------------------------
+--Precio Costo
 SELECT 
 p.PrecioCosto,
 dbo.fn_impuesto(p.PrecioCosto) AS impuesto,
@@ -919,9 +913,9 @@ Procedimientos almacenados (STORED PROCEDURES)
 
 USE ProyectoFerreteria;
 GO
-/*=================================================================
-ELIMINAR PROCEDIMIENTOS SI EXISTEN
-===================================================================*/
+
+-- ELIMINAR PROCEDIMIENTOS SI EXISTEN
+
 
 IF OBJECT_ID('sp_InsertarCliente') IS NOT NULL DROP PROCEDURE sp_InsertarCliente;
 IF OBJECT_ID('sp_ConsultarClientes') IS NOT NULL DROP PROCEDURE sp_ConsultarClientes;
@@ -941,9 +935,7 @@ IF OBJECT_ID('sp_RegistrarDevolucion') IS NOT NULL DROP PROCEDURE sp_RegistrarDe
 IF OBJECT_ID('sp_ProductosBajoStock') IS NOT NULL DROP PROCEDURE sp_ProductosBajoStock;
 GO
 
-/*=================================================================
-PROCEDIMIENTOS DE CLIENTES
-===================================================================*/
+-- PROCEDIMIENTOS DE CLIENTES
 
 GO
 CREATE PROCEDURE sp_InsertarCliente 
@@ -954,21 +946,19 @@ CREATE PROCEDURE sp_InsertarCliente
     @Direccion NVARCHAR(200)
 AS
 BEGIN
-    INSERT INTO Cliente (Nombre, Apellidos, Telefono, Correo, Direccion)-- Inserta un nuevo cliente en la base de datos
+    INSERT INTO Cliente (Nombre, Apellidos, Telefono, Correo, Direccion)-- Inserta un cliente nuevo
     VALUES (@Nombre, @Apellidos, @Telefono, @Correo, @Direccion);
 END;
 GO
 
-CREATE PROCEDURE sp_ConsultarClientes -- Consulta todos los clientes registrados
+CREATE PROCEDURE sp_ConsultarClientes -- Muestra todos los clientes
 AS
 BEGIN
     SELECT * FROM Cliente;
 END;
 GO
 
-/*==================================================================
-PROCEDIMIENTOS DE PRODUCTOS
-===================================================================*/
+-- PROCEDIMIENTOS DE PRODUCTOS
 
 CREATE PROCEDURE sp_InsertarProducto 
     @CodigoBarras NVARCHAR(50),
@@ -980,14 +970,14 @@ CREATE PROCEDURE sp_InsertarProducto
     @FK_Categoria INT
 AS
 BEGIN
-    INSERT INTO Producto  -- Inserta un nuevo producto en el sistema
+    INSERT INTO Producto  -- Agrega un producto
     (CodigoBarras, Nombre, Descripcion, PrecioVenta, PrecioCosto, StockMinimo, FK_Categoria)
     VALUES
     (@CodigoBarras, @Nombre, @Descripcion, @PrecioVenta, @PrecioCosto, @StockMinimo, @FK_Categoria);
 END;
 GO
 
-CREATE PROCEDURE sp_ActualizarProducto    -- Actualiza información básica de un producto
+CREATE PROCEDURE sp_ActualizarProducto  -- Actualiza información básica de un producto
     @PK_Producto INT,
     @Nombre NVARCHAR(100),
     @PrecioVenta DECIMAL(10,2)
@@ -1000,7 +990,7 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE sp_ConsultarProductos -- Consulta productos junto con su categoría
+CREATE PROCEDURE sp_ConsultarProductos -- Lista productos con su categoría
 AS
 BEGIN
     SELECT P.*, C.Nombre AS Categoria
@@ -1010,9 +1000,8 @@ BEGIN
 END;
 GO
 
-/*===================================================================
- PROCEDIMIENTO DE INVENTARIO
-=====================================================================*/
+
+-- PROCEDIMIENTO DE INVENTARIO
 
 CREATE PROCEDURE sp_AjustarInventario 
     @FK_Sucursal INT,
@@ -1028,9 +1017,9 @@ BEGIN
 END;
 GO
 
-/*==================================================================
-PROCEDIMIENTOS DE VENTAS
-====================================================================*/
+
+--PROCEDIMIENTOS DE VENTAS
+
 
 CREATE PROCEDURE sp_CrearVenta     
     @PK_Venta INT,
@@ -1039,7 +1028,7 @@ CREATE PROCEDURE sp_CrearVenta
     @FK_Sucursal INT
 AS
 BEGIN
-    INSERT INTO Venta (PK_Venta, Fecha, FK_Cliente, FK_Empleado, FK_Sucursal) -- Registra una nueva venta con fecha actual
+    INSERT INTO Venta (PK_Venta, Fecha, FK_Cliente, FK_Empleado, FK_Sucursal) -- Crea una venta
     VALUES (@PK_Venta, GETDATE(), @FK_Cliente, @FK_Empleado, @FK_Sucursal);
 END;
 GO
@@ -1053,21 +1042,21 @@ BEGIN
     DECLARE @Precio DECIMAL(10,2);
     DECLARE @Sucursal INT;
 
-    SELECT @Precio = PrecioVenta -- Obtener el precio del producto
+    SELECT @Precio = PrecioVenta -- Busca el precio del producto
     FROM Producto
     WHERE PK_Producto = @FK_Producto;
 
     IF @Precio IS NULL
     BEGIN
-        PRINT 'Error: Producto no existe'; -- Validar que el producto exista
+        PRINT 'Error: Producto no existe'; -- Verifica que el producto exista
         RETURN;
     END
 
-    SELECT @Sucursal = FK_Sucursal  -- Obtener la sucursal asociada a la venta
+    SELECT @Sucursal = FK_Sucursal  -- Busca la sucursal de la venta
     FROM Venta
     WHERE PK_Venta = @FK_Venta;
 
-    INSERT INTO DetalleVenta (FK_Venta, FK_Producto, Cantidad, PrecioUnitario) -- Insertar el detalle de la venta
+    INSERT INTO DetalleVenta (FK_Venta, FK_Producto, Cantidad, PrecioUnitario) -- Agrega el detalle de la venta
     VALUES (@FK_Venta, @FK_Producto, @Cantidad, @Precio);
 
     --UPDATE Inventario -- Actualizar inventario SOLO en la sucursal correspondiente
@@ -1078,7 +1067,7 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE sp_ConsultarVentas -- Consulta ventas con cliente, empleado, sucursal y total
+CREATE PROCEDURE sp_ConsultarVentas -- Muestra ventas con cliente, empleado y total
 AS
 BEGIN
     SELECT 
@@ -1099,9 +1088,9 @@ BEGIN
 END;
 GO
 
-/*=================================================================
-PROCEDIMIENTO DE DEVOLUCIONES
-==================================================================*/
+
+--PROCEDIMIENTO DE DEVOLUCIONES
+
 
 CREATE PROCEDURE sp_RegistrarDevolucion 
     @FK_Venta INT,
@@ -1113,24 +1102,24 @@ AS
 BEGIN
     DECLARE @Sucursal INT;
 
-    SELECT @Sucursal = FK_Sucursal  -- Obtener la sucursal de la venta
+    SELECT @Sucursal = FK_Sucursal  -- Busca la sucursal de la venta
     FROM Venta
     WHERE PK_Venta = @FK_Venta;
 
-    INSERT INTO Devolucion (FK_Venta, FK_Producto, Cantidad, Motivo, FK_Empleado) -- Registrar devolución
+    INSERT INTO Devolucion (FK_Venta, FK_Producto, Cantidad, Motivo, FK_Empleado) -- Guarda la devolución
     VALUES (@FK_Venta, @FK_Producto, @Cantidad, @Motivo, @FK_Empleado);
 
-    UPDATE Inventario     -- Devolver productos al inventario
+    UPDATE Inventario  -- Suma los productos al inventario
     SET Cantidad = Cantidad + @Cantidad
     WHERE FK_Producto = @FK_Producto
     AND FK_Sucursal = @Sucursal;
 END;
 GO
 
-/*==================================================================
- PROCEDIMIENTO DE REPORTES
-====================================================================*/
-CREATE PROCEDURE sp_ProductosBajoStock  -- Muestra productos con inventario que esten por debajo del mínimo
+
+-- PROCEDIMIENTO DE REPORTES
+
+CREATE PROCEDURE sp_ProductosBajoStock  -- Muestra productos con poco stock
 AS
 BEGIN
     SELECT P.*
@@ -1141,15 +1130,14 @@ BEGIN
 END;
 GO
 /*=================================================================
-VISTAS 
+              VISTAS 
 ===================================================================*/
 
 USE ProyectoFerreteria;
 GO
 
-/*=================================================================
-ELIMINAR VISTAS SI EXISTEN
-===================================================================*/
+-- ELIMINAR VISTAS SI EXISTEN
+
 
 IF OBJECT_ID('vw_ProductosDetalle') IS NOT NULL DROP VIEW vw_ProductosDetalle;
 IF OBJECT_ID('vw_InventarioSucursal') IS NOT NULL DROP VIEW vw_InventarioSucursal;
@@ -1158,9 +1146,7 @@ IF OBJECT_ID('vw_FacturaDetalle') IS NOT NULL DROP VIEW vw_FacturaDetalle;
 IF OBJECT_ID('vw_ProductosMasVendidos') IS NOT NULL DROP VIEW vw_ProductosMasVendidos;
 GO
 
-/*=================================================================
-VISTA DE PRODUCTOS
-===================================================================*/
+-- VISTA DE PRODUCTOS
 
 CREATE VIEW vw_ProductosDetalle
 AS
@@ -1180,9 +1166,9 @@ INNER JOIN Proveedor pr
     ON pp.FK_Proveedor = pr.PK_Proveedor;
 GO
 
-/*=================================================================
-VISTA DE INVENTARIO POR SUCURSAL
-===================================================================*/
+
+-- VISTA DE INVENTARIO POR SUCURSAL
+
 
 CREATE VIEW vw_InventarioSucursal
 AS
@@ -1198,9 +1184,8 @@ INNER JOIN Producto p
     ON i.FK_Producto = p.PK_Producto;
 GO
 
-/*=================================================================
-VISTA DE VENTAS
-===================================================================*/
+
+-- VISTA DE VENTAS
 
 CREATE VIEW vw_VentasDetalle
 AS
@@ -1219,9 +1204,7 @@ INNER JOIN Sucursal s
     ON v.FK_Sucursal = s.PK_Sucursal;
 GO
 
-/*=================================================================
-VISTA DETALLE DE FACTURA
-===================================================================*/
+-- VISTA DETALLE DE FACTURA
 
 CREATE VIEW vw_FacturaDetalle
 AS
@@ -1242,9 +1225,8 @@ INNER JOIN Cliente c
     ON v.FK_Cliente = c.PK_Cliente;
 GO
 
-/*=================================================================
-VISTA DE PRODUCTOS MAS VENDIDOS
-===================================================================*/
+
+-- VISTA DE PRODUCTOS MAS VENDIDOS
 
 CREATE VIEW vw_ProductosMasVendidos
 AS
@@ -1262,16 +1244,16 @@ Disparadores (Triggers)
 ===================================================================*/
 
 
-/*==================================================================
-TRIGGERS DE VENTAS
-===================================================================*/
+
+-- TRIGGERS DE VENTAS
+
 
 CREATE TRIGGER tr_ActualizarStockPorVenta
 ON DetalleVenta
 AFTER INSERT
 AS
 BEGIN
-    -- Descuenta automáticamente del inventario la cantidad de productos vendidos
+    -- Resta del inventario lo que se vendió
     UPDATE I
     SET I.Cantidad = I.Cantidad - ins.Cantidad
     FROM Inventario I
@@ -1310,9 +1292,8 @@ BEGIN
 END;
 GO
 
-/*==================================================================
-TRIGGERS DE DEVOLUCIONES
-===================================================================*/
+
+-- TRIGGERS DE DEVOLUCIONES
 
 CREATE TRIGGER tr_DevolucionAjusteStock
 ON Devolucion
@@ -1330,9 +1311,7 @@ END;
 GO
 
 
-/*==================================================================
-TRIGGERS DE AUDITORÍA
-===================================================================*/
+-- TRIGGERS DE AUDITORÍA
 
 CREATE TRIGGER tr_AuditoriaPrecios
 ON Producto
@@ -1357,10 +1336,7 @@ BEGIN
 END;
 GO
 
-
-/*==================================================================
-TRIGGERS DE SEGURIDAD
-===================================================================*/
+-- TRIGGERS DE SEGURIDAD
 
 CREATE TRIGGER tr_PrevenirBorradoClienteConVentas
 ON Cliente
@@ -1395,9 +1371,8 @@ Select * From CategoriaProducto;
 Select * From Rol;
 Select * From TipoMovimiento;
 
-/*=====================================================
-Select: Tablas Maestras
- ========================================================*/
+
+-- Select: Tablas Maestras
 
 Select * From Cliente;
 Select * From Empleado;
@@ -1405,28 +1380,24 @@ Select * From Usuario;
 Select * From Proveedor;
 Select * From Producto;
 
-/*=======================================================
-Select: Tablas Relacionales
-========================================================*/
+
+-- Select: Tablas Relacionales
 
 Select * From ProductoProveedor;
 Select * From Inventario;
 
-/*=====================================================
- Select: Movimientos
-========================================================*/
+
+-- Select: Movimientos
 
 Select * From MovimientoInventario;
 
-/* =====================================================
- Select: Ventas
- ========================================================*/
+
+-- Select: Ventas
 
 Select * From Venta;
 Select * From DetalleVenta;
 
-/*======================================================
-Select: Devoluciones
- ========================================================*/
+
+-- Select: Devoluciones
 
 Select * From Devolucion;
