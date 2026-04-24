@@ -803,9 +803,9 @@ Update Devolucion
 Set Motivo = 'Producto con defecto grave'
 Where PK_Devolucion = 6;
 
-/* ==========================================
-Eliminaciones
- ============================================*/
+/* =========================================================
+ Eliminaciones
+========================================================= */
 
 -- Eliminar una devolución
 Delete From Devolucion
@@ -820,8 +820,26 @@ Delete From Usuario
 Where Activo = 0;
 
 -- Eliminar un cliente específico
-Delete From Cliente
-Where PK_Cliente = 5;
+
+-- Borrar devoluciones relacionadas con las ventas del cliente
+DELETE FROM Devolucion 
+WHERE FK_Venta IN (
+    SELECT PK_Venta FROM Venta WHERE FK_Cliente = 5
+);
+
+-- Borrar detalles de venta relacionados
+DELETE FROM DetalleVenta 
+WHERE FK_Venta IN (
+    SELECT PK_Venta FROM Venta WHERE FK_Cliente = 5
+);
+
+-- Borrar ventas del cliente
+DELETE FROM Venta 
+WHERE FK_Cliente = 5;
+
+-- Finalmente borrar el cliente
+DELETE FROM Cliente 
+WHERE PK_Cliente = 5;
 
 -- Eliminar inventario de un producto en una sucursal
 Delete From Inventario
@@ -910,9 +928,6 @@ FROM Producto p;
 /*=================================================================
 Procedimientos almacenados (STORED PROCEDURES)
 ===================================================================*/
-
-USE ProyectoFerreteria;
-GO
 
 -- ELIMINAR PROCEDIMIENTOS SI EXISTEN
 
@@ -1133,9 +1148,6 @@ GO
               VISTAS 
 ===================================================================*/
 
-USE ProyectoFerreteria;
-GO
-
 -- ELIMINAR VISTAS SI EXISTEN
 
 
@@ -1319,14 +1331,14 @@ AFTER UPDATE
 AS
 BEGIN
     -- Registra en el historial cuando se modifica el precio de un producto
-    IF UPDATE(Precio)
+    IF UPDATE(PrecioVenta)
     BEGIN
         INSERT INTO MovimientoInventario 
         (FK_Inventario, FK_TipoMovimiento, Cantidad, Motivo, Fecha)
         SELECT 
             I.PK_Inventario, 
             4, -- Tipo de movimiento: ajuste/cambio
-            0, 
+            1, 
             'Cambio de precio detectado para el producto', 
             GETDATE()
         FROM inserted ins
