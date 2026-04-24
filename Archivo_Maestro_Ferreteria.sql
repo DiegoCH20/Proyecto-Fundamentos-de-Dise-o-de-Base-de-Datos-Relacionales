@@ -1374,6 +1374,94 @@ BEGIN
 END;
 GO
 
+USE ProyectoFerreteria;
+GO
+
+-- ===================================================================
+-- 						Script Prueba TRIGGERS
+-- ===================================================================
+
+PRINT 'Inicio Prueba TRIGGERS';
+PRINT '---------------------------------------------------';
+
+-- 0. Se limpian pruebaas anteriores 
+DELETE FROM Devolucion WHERE FK_Venta = 888;
+DELETE FROM DetalleVenta WHERE FK_Venta = 888;
+DELETE FROM Venta WHERE PK_Venta = 888;
+
+-- 1. preparacion stock
+UPDATE Inventario 
+SET Cantidad = 100 
+WHERE FK_Producto = 1 AND FK_Sucursal = 1;
+
+PRINT 'PRUEBA 1 & 2: Venta y Validación de Stock';
+SELECT 'Stock Inicial' AS Estado, Cantidad FROM Inventario WHERE FK_Producto = 1 AND FK_Sucursal = 1;
+
+-- Venta exitosa
+INSERT INTO Venta (PK_Venta, Fecha, FK_Cliente, FK_Empleado, FK_Sucursal) 
+VALUES (888, GETDATE(), 1, 1, 1);
+
+INSERT INTO DetalleVenta (FK_Venta, FK_Producto, Cantidad, PrecioUnitario) 
+VALUES (888, 1, 10, 1500.00);
+
+SELECT 'Stock Post-Venta (10 unidades)' AS Estado, Cantidad FROM Inventario WHERE FK_Producto = 1 AND FK_Sucursal = 1;
+
+-- Validación de Stock (Debe fallar con el RAISERROR del trigger)
+PRINT 'Intentando vender 500 unidades (Debe fallar):';
+BEGIN TRY
+    INSERT INTO DetalleVenta (FK_Venta, FK_Producto, Cantidad, PrecioUnitario) 
+    VALUES (888, 1, 500, 1500.00);
+END TRY
+BEGIN CATCH
+    PRINT 'MENSAJE CAPTURADO: ' + ERROR_MESSAGE();
+END CATCH
+GO
+
+PRINT '---------------------------------------------------';
+PRINT 'PRUEBA 3: Devoluciones';
+
+INSERT INTO Devolucion (FK_Venta, FK_Producto, Cantidad, Motivo, FK_Empleado)
+VALUES (888, 1, 5, 'Prueba de retorno de stock', 1);
+
+SELECT 'Stock Post-Devolución (5 unidades)' AS Estado, Cantidad FROM Inventario WHERE FK_Producto = 1 AND FK_Sucursal = 1;
+GO
+
+PRINT '---------------------------------------------------';
+PRINT 'PRUEBA 4: Auditoría de Precios';
+
+
+IF EXISTS (SELECT * FROM sys.columns WHERE Name = 'PrecioVenta' AND Object_ID = OBJECT_ID('Producto'))
+BEGIN
+    UPDATE Producto SET PrecioVenta = PrecioVenta + 5.00 WHERE PK_Producto = 1;
+    
+    SELECT TOP 1 'Último Movimiento' AS Log, Motivo, Fecha 
+    FROM MovimientoInventario 
+    ORDER BY PK_Movimiento DESC;
+END
+ELSE
+BEGIN
+    PRINT 'La columna se llama distinto. Intenta con Precio o PrecioVenta.';
+END
+GO
+
+PRINT '---------------------------------------------------';
+PRINT 'PRUEBA 5: Protección de Clientes';
+
+PRINT 'Intentando borrar cliente con ventas (Debe fallar):';
+BEGIN TRY
+    DELETE FROM Cliente WHERE PK_Cliente = 1;
+END TRY
+BEGIN CATCH
+    PRINT 'MENSAJE CAPTURADO: ' + ERROR_MESSAGE();
+END CATCH
+GO
+
+PRINT '---------------------------------------------------';
+PRINT 'PRUEBAS FINALIZADAS.';
+
+
+
+
 /* ===================================================
 Select: Tablas De Catálogo
  ========================================================*/
